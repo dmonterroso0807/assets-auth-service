@@ -35,3 +35,47 @@ export const refreshTokenController = async (req, res) => {
     return handleServiceError(res, error);
   }
 };
+
+export const registerClientController = async (req, res) => {
+  try {
+    const client = await authService.registerClient(req.body);
+    return ok(res, {
+      message:
+        "Cliente creado exitosamente. Se envió un correo de verificación",
+      status: 201,
+      data: client,
+    });
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const verifyEmailController = async (req, res) => {
+  try {
+    const { uid, token } = req.query;
+    const result = await authService.verifyEmail({ uid, token });
+
+    if (result.alreadyVerified) {
+      return ok(res, {
+        message: "El correo ya había sido verificado",
+        data: result.user,
+      });
+    }
+
+    return ok(res, {
+      message: "Correo verificado exitosamente, tu cuenta ya está activa",
+      data: result.user,
+    });
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const resendVerificationController = async (req, res) => {
+  try {
+    const result = await authService.resendVerificationEmail(req.body.email);
+    return ok(res, { message: result.message });
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
