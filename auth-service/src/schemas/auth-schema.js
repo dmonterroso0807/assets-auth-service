@@ -39,3 +39,7 @@ export const registerClientSchema = z.object({
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().trim().min(1, "El refresh token es requerido"),
 });
+
+export const resendVerificationSchema = z.object({
+  email: z.string().trim().email("El correo electrónico no es válido"),
+});

@@ -1,8 +1,5 @@
 import { Schema, model } from "mongoose";
 
-const generateAccountNumber = () =>
-  Array.from({ length: 10 }, () => Math.floor(Math.random() * 10)).join("");
-
 const userSchema = new Schema(
   {
     role: {
@@ -27,12 +24,6 @@ const userSchema = new Schema(
       trim: true,
       minlength: [4, "El username debe tener al menos 4 caracteres"],
       maxlength: [25, "El username no debe superar 25 caracteres"],
-    },
-    accountNumber: {
-      type: String,
-      unique: true,
-      sparse: true,
-      default: generateAccountNumber,
     },
     dpi: {
       type: String,
@@ -125,6 +116,17 @@ const userSchema = new Schema(
       default: [],
       select: false,
     },
+    // Verificación de correo electrónico por token (hash + expiración)
+    emailVerificationTokenHash: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -135,8 +137,5 @@ const userSchema = new Schema(
 userSchema.index({ email: 1 });
 userSchema.index({ userName: 1 });
 userSchema.index({ dpi: 1 }, { unique: true, sparse: true });
-userSchema.index({ accountNumber: 1 }, { unique: true, sparse: true });
-
-userSchema.statics.generateAccountNumber = generateAccountNumber;
 
 export default model("User", userSchema);
