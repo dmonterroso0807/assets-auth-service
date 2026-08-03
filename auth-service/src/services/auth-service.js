@@ -1,8 +1,10 @@
 import bycrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../models/user-model.js";
 import {
   generateAccessToken,
   generateRefreshToken,
+  verifyToken,
 } from "../utils/jwt-util.js";
 
 class ServiceError extends Error {
@@ -52,6 +54,46 @@ export const login = async ({ userName, password }) => {
     refreshToken,
     user: toPublicUser(user),
   };
+};
+
+export const refreshAccessToken = async (refreshToken) => {
+  let payload;
+  try {
+    payload = verifyToken(refreshToken);
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ServiceError(
+        "El refresh token ha expirado",
+        401,
+        "REFRESH_TOKEN_EXPIRED",
+      );
+    }
+    throw new ServiceError(
+      "Refresh token inválido",
+      401,
+      "INVALID_REFRESH_TOKEN",
+    );
+  }
+
+  if (payload.type !== "refresh") {
+    throw new ServiceError(
+      "Token inválido para esta operación",
+      401,
+      "INVALID_TOKEN_TYPE",
+    );
+  }
+
+  const user = await User.findById(payload.uid).select("+refreshTokens");
+  if (!user || !user.refreshTokens.includes(refreshToken)) {
+    throw new ServiceError(
+      "Refresh token inválido o revocado",
+      401,
+      "INVALID_REFRESH_TOKEN",
+    );
+  }
+
+  const accessToken = generateAccessToken(user);
+  return { accessToken };
 };
 
 const toPublicUser = (user) => ({
