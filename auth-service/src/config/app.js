@@ -5,9 +5,11 @@ import morgan from "morgan";
 import { dbConnection } from "./db.js";
 
 // Configuración de la aplicación
-import { rateLimitConfig } from "./rateLimit-configuration.js";
+import { rateLimitConfig } from "../middlewares/rateLimit-configuration.js";
 import { corsOptions } from "./cors-configuration.js";
 import { helmetConfiguration } from "./helmet-configuration.js";
+import { seedAdmin } from "../utils/seedAdmin.js";
+import authRoutes from "../routes/auth-route.js";
 
 const middlewares = (app) => {
   // Configuración de express para manejar solicitudes con cuerpos grandes
@@ -23,6 +25,13 @@ const middlewares = (app) => {
   app.use(morgan(process.env.NODE_ENV === "development" ? "dev" : "combined"));
 };
 
+const routes = (app) => {
+  app.get("/health-check", (req, res) => {
+    res.status(200).json({ success: true, message: "auth-service OK" });
+  });
+  app.use("/api/auth", authRoutes);
+};
+
 export const initServer = async () => {
   const app = express();
   const PORT = process.env.PORT;
@@ -30,14 +39,15 @@ export const initServer = async () => {
 
   try {
     await dbConnection();
+    await seedAdmin();
     middlewares(app);
-
-    app.listen(PORT, () => {
-      console.log(
-        `Servidor escuchando en el puerto ${PORT} - Modo: ${process.env.NODE_ENV}`,
-      );
-      console.log(`Health check: http://localhost:${PORT}/health-check`);
-    });
+    (routes(app),
+      app.listen(PORT, () => {
+        console.log(
+          `Servidor escuchando en el puerto ${PORT} - Modo: ${process.env.NODE_ENV}`,
+        );
+        console.log(`Health check: http://localhost:${PORT}/health-check`);
+      }));
   } catch (error) {
     console.error("Error al iniciar el servidor:", error);
     process.exit(1);

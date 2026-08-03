@@ -18,3 +18,22 @@ export const rateLimitConfig = rateLimit({
     });
   },
 });
+
+// Límite más estricto específico para /login, para mitigar fuerza bruta sobre credenciales de usuario.
+export const loginRateLimitConfig = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    console.warn(
+      `[ALERTA DE SEGURIDAD] Posible fuerza bruta en login - IP: ${req.ip}`,
+    );
+    res.status(429).json({
+      success: false,
+      message: "Demasiados intentos de inicio de sesión. Intenta más tarde.",
+      error: "LOGIN_RATE_LIMIT_EXCEEDED",
+      retryAfter: req.rateLimit.resetTime,
+    });
+  },
+});
