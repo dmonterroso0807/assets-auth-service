@@ -52,7 +52,7 @@ export const registerClientController = async (req, res) => {
 
 export const verifyEmailController = async (req, res) => {
   try {
-    const { uid, token } = req.query;
+    const { uid, token } = req.body;
     const result = await authService.verifyEmail({ uid, token });
 
     if (result.alreadyVerified) {
@@ -75,6 +75,38 @@ export const resendVerificationController = async (req, res) => {
   try {
     const result = await authService.resendVerificationEmail(req.body.email);
     return ok(res, { message: result.message });
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const updateAccountController = async (req, res) => {
+  try {
+    const updatedUser = await authService.updateAccount(
+      req.user,
+      req.params.id,
+      req.body,
+    );
+    return ok(res, {
+      message: "Cuenta actualizada exitosamente",
+      data: updatedUser,
+    });
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
+export const changeRoleController = async (req, res) => {
+  try {
+    const updatedUser = await authService.changeUserRole(
+      req.user,
+      req.params.id,
+      req.body.role,
+    );
+    return ok(res, {
+      message: "Rol actualizado exitosamente",
+      data: updatedUser,
+    });
   } catch (error) {
     return handleServiceError(res, error);
   }

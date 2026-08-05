@@ -5,7 +5,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: {
-        values: ["ADMIN", "CLIENT"],
+        values: ["SUPER_ADMIN", "ADMIN", "CLIENT"],
         message: "El rol debe ser ADMIN o CLIENT",
       },
       default: "CLIENT",

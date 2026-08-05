@@ -14,7 +14,7 @@ export const seedAdmin = async () => {
   const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
   const admin = new User({
-    role: "ADMIN",
+    role: "SUPER_ADMIN",
     name: "Administrador",
     userName: adminUserName,
     email: process.env.ADMIN_EMAIL || "admin@smartassets.local",

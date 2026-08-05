@@ -5,6 +5,8 @@ import {
   registerClientController,
   verifyEmailController,
   resendVerificationController,
+  updateAccountController,
+  changeRoleController,
 } from "../controllers/auth-controller.js";
 import { validateBody } from "../middlewares/validate-middleware.js";
 import {
@@ -20,23 +22,38 @@ import {
   refreshTokenSchema,
   registerClientSchema,
   resendVerificationSchema,
+  verifyEmailSchema,
+  updateAccountSchema,
+  changeRoleSchema,
 } from "../schemas/auth-schema.js";
 
 const router = Router();
 
-// Público
+// Login
 router.post(
   "/login",
   loginRateLimitConfig,
   validateBody(loginSchema),
   loginController,
 );
+
+// Refrescar Token
 router.post(
   "/refresh-token",
   validateBody(refreshTokenSchema),
   refreshTokenController,
 );
-router.get("/verify-email", verifyEmailController);
+
+/* POST en vez de GET: el uid y el token viajan en el body, no en la URL,
+   para que no queden expuestos en el historial del navegador, logs de acceso,
+   cachés intermedias ni en el header Referer. */
+router.post(
+  "/verify-email",
+  validateBody(verifyEmailSchema),
+  verifyEmailController,
+);
+
+// Enviar correo de verificación nuevamente
 router.post(
   "/resend-verification",
   rateLimitConfig,
@@ -44,13 +61,30 @@ router.post(
   resendVerificationController,
 );
 
-// Solo ADMIN: crear clientes
+// Solo ADMIN o SUPER_ADMIN: crear clientes
 router.post(
   "/register",
   verifyAccessToken,
-  authorizeRoles("ADMIN"),
+  authorizeRoles("ADMIN", "SUPER_ADMIN"),
   validateBody(registerClientSchema),
   registerClientController,
+);
+
+// Actualizar
+router.patch(
+  "/users/:id",
+  verifyAccessToken,
+  validateBody(updateAccountSchema),
+  updateAccountController,
+);
+
+// Cambio de rol: exclusivo del administrador general (SUPER_ADMIN)
+router.patch(
+  "/users/:id/role",
+  verifyAccessToken,
+  authorizeRoles("SUPER_ADMIN"),
+  validateBody(changeRoleSchema),
+  changeRoleController,
 );
 
 export default router;
