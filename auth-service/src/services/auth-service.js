@@ -253,6 +253,14 @@ export const refreshAccessToken = async (refreshToken) => {
   return { accessToken };
 };
 
+const PUBLIC_LIST_FIELDS =
+  "role name userName dpi address phone email status -_id";
+
+export const listUsers = async () => {
+  const users = await User.find().select(PUBLIC_LIST_FIELDS).lean();
+  return users;
+};
+
 const EDITABLE_FIELDS = ["name", "address", "jobName", "monthlyIncome"];
 
 const findUserOr404 = async (userId) => {

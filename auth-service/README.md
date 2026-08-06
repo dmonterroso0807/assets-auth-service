@@ -142,13 +142,39 @@ Todas las respuestas siguen el mismo formato estándar:
 { "success": false, "message": "...", "error": "CODIGO_ERROR", "details": null }
 ```
 
-| Método | Ruta                      | Descripción                                                      | Protegido                                      |
-| ------ | ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
-| GET    | `/health-check`           | Verifica que el servicio esté arriba                             | No                                             |
-| POST   | `/api/auth/login`         | Autentica por `userName` o `email` + `password`                  | No (rate limit estricto: 10 intentos / 15 min) |
-| POST   | `/api/auth/refresh-token` | Genera un nuevo access token a partir de un refresh token válido | No                                             |
+| Método | Ruta                            | Descripción                                                       | Protegido                                        |
+| ------ | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------ |
+| GET    | `/health-check`                 | Verifica que el servicio esté arriba                              | No                                               |
+| POST   | `/api/auth/login`               | Autentica por `userName` o `email` + `password`                   | No (rate limit estricto: 10 intentos / 15 min)   |
+| POST   | `/api/auth/refresh-token`       | Genera un nuevo access token a partir de un refresh token válido  | No                                               |
+| POST   | `/api/auth/verify-email`        | Verifica el correo electrónico a partir de `uid` + `token`        | No                                               |
+| POST   | `/api/auth/resend-verification` | Reenvía el correo de verificación                                 | No (rate limit general)                          |
+| POST   | `/api/auth/register`            | Crea un nuevo cliente (`CLIENT`)                                  | Sí — `ADMIN`, `SUPER_ADMIN`                      |
+| GET    | `/api/auth/users`               | Lista los usuarios registrados con datos no sensibles (ver abajo) | Sí — `ADMIN`, `SUPER_ADMIN`                      |
+| PATCH  | `/api/auth/users/:id`           | Actualiza campos editables de una cuenta                          | Sí — dueño de la cuenta, `ADMIN` o `SUPER_ADMIN` |
+| PATCH  | `/api/auth/users/:id/role`      | Cambia el rol de un usuario                                       | Sí — `SUPER_ADMIN`                               |
 
 Códigos de error más comunes: `INVALID_CREDENTIALS`, `USER_INACTIVE`, `VALIDATION_ERROR`, `MISSING_TOKEN`, `TOKEN_EXPIRED`, `INVALID_TOKEN`, `INVALID_TOKEN_TYPE`, `FORBIDDEN`, `RATE_LIMIT_EXCEEDED` / `LOGIN_RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`.
+
+### 📄 `GET /api/auth/users` — Listado de usuarios
+
+Devuelve únicamente los campos considerados necesarios y no sensibles para un listado administrativo. **No se expone `_id`, `password`, `dpi`, `phone`, `address`, `jobName`, `monthlyIncome`, `refreshTokens` ni los tokens de verificación de correo**, para evitar filtrar información que pueda comprometer a los usuarios o a la plataforma.
+
+```json
+{
+  "success": true,
+  "message": "Usuarios obtenidos exitosamente",
+  "data": [
+    {
+      "role": "CLIENT",
+      "name": "Juan Pérez",
+      "userName": "jperez",
+      "email": "juan@example.com",
+      "status": true
+    }
+  ]
+}
+```
 
 ## 👤 Modelo de usuario
 
@@ -181,7 +207,9 @@ Al iniciar el servidor (antes de levantar Express), se ejecuta `seedAdmin()`, qu
 - [x] Middleware de verificación de JWT y autorización por rol
 - [x] Refresh token flow
 - [x] Seed automático de usuario administrador
-- [ ] Endpoint de registro de clientes (`registerClient` ya existe en el servicio, falta exponerlo en `auth-route.js`)
+- [x] Endpoint de registro de clientes
+- [x] Verificación de correo electrónico
+- [x] Listado de usuarios con datos no sensibles (`GET /api/auth/users`)
 - [ ] Endpoint de logout
 - [ ] Tests de integración con Supertest
 - [ ] Documentación de API (Swagger / OpenAPI)

@@ -7,6 +7,7 @@ import {
   resendVerificationController,
   updateAccountController,
   changeRoleController,
+  listUsersController,
 } from "../controllers/auth-controller.js";
 import { validateBody } from "../middlewares/validate-middleware.js";
 import {
@@ -68,6 +69,22 @@ router.post(
   authorizeRoles("ADMIN", "SUPER_ADMIN"),
   validateBody(registerClientSchema),
   registerClientController,
+);
+
+/**
+ * * LISTADO DE USUARIOS
+ * ! Permisos: Solo ADMIN o SUPER_ADMIN.
+ *
+ * * Razón de seguridad:
+ * * Aunque la respuesta viene sanitizada (sin _id, password, tokens, dpi, etc.),
+ * ! la lista de usuarios (nombres, correos, usernames) es información interna
+ * ! y no debe quedar expuesta sin autenticación previa.
+ */
+router.get(
+  "/users",
+  verifyAccessToken,
+  authorizeRoles("ADMIN", "SUPER_ADMIN"),
+  listUsersController,
 );
 
 // Actualizar
