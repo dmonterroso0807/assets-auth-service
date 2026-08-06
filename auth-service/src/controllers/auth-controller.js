@@ -80,6 +80,15 @@ export const resendVerificationController = async (req, res) => {
   }
 };
 
+export const listUsersController = async (req, res) => {
+  try {
+    const users = await authService.listUsers();
+    return ok(res, { message: "Usuarios obtenidos exitosamente", data: users });
+  } catch (error) {
+    return handleServiceError(res, error);
+  }
+};
+
 export const updateAccountController = async (req, res) => {
   try {
     const updatedUser = await authService.updateAccount(
