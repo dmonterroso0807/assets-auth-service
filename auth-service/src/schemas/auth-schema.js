@@ -34,4 +34,5 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().trim().min(1, "El refresh token es requerido"),
 });
 
+// Logout usa la misma forma que refresh-token: se revoca ese refresh token puntual.
 export const logoutSchema = refreshTokenSchema;

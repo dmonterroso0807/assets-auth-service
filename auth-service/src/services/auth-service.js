@@ -27,8 +27,6 @@ export const login = async ({ userName, password }) => {
     $or: [{ userName }, { email: userName.toLowerCase() }],
   }).select("+password +refreshTokens");
 
-  // Mensaje genérico a propósito: no decimos si falló el usuario o la
-  // contraseña, para no dejar enumerar usuarios registrados por fuerza bruta.
   if (!user) {
     throw new ServiceError(
       "Usuario o contraseña incorrectos",

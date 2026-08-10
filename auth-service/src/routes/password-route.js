@@ -15,8 +15,6 @@ import {
 
 const router = Router();
 
-// Público. uid/token/newPassword viajan en el body (mismo criterio que
-// verify-email: nunca en la URL).
 router.post(
   "/forgot-password",
   emailSendingRateLimitConfig,

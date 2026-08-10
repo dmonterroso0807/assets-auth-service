@@ -18,7 +18,6 @@ export const helmetConfiguration = {
     },
   },
 
-  // Disable HSTS in development mode to avoid issues with self-signed certificates
   hsts: isDev
     ? false
     : { maxAge: 31536000, includeSubDomains: true, preload: true },

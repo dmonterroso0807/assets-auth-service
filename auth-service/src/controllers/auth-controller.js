@@ -7,7 +7,7 @@ export const loginController = async (req, res) => {
     const result = await authService.login(req.body);
     return ok(res, { message: "Inicio de sesión exitoso", data: result });
   } catch (error) {
-    return handleServiceError(res, error);
+    return handleServiceError(res, error, "Auth");
   }
 };
 
@@ -16,7 +16,7 @@ export const refreshTokenController = async (req, res) => {
     const result = await authService.refreshAccessToken(req.body.refreshToken);
     return ok(res, { message: "Token renovado", data: result });
   } catch (error) {
-    return handleServiceError(res, error);
+    return handleServiceError(res, error, "Auth");
   }
 };
 
@@ -39,6 +39,6 @@ export const registerClientController = async (req, res) => {
       data: client,
     });
   } catch (error) {
-    return handleServiceError(res, error);
+    return handleServiceError(res, error, "Auth");
   }
 };

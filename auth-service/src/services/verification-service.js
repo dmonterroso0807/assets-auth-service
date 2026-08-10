@@ -78,7 +78,6 @@ export const resendVerificationEmail = async (email) => {
     "+emailVerificationTokenHash +emailVerificationExpires",
   );
 
-  // Respuesta genérica: no revelamos si el correo existe o no (evita user enumeration)
   const genericResponse = {
     message:
       "Si el correo existe y no ha sido verificado, se ha enviado un nuevo enlace",

@@ -1,43 +1,51 @@
 import { Router } from "express";
 import {
-  loginController,
-  refreshTokenController,
-  registerClientController,
-} from "../controllers/auth-controller.js";
+  listUsersController,
+  updateAccountController,
+  changeRoleController,
+} from "../controllers/user-controller.js";
 import { validateBody } from "../middlewares/validate-middleware.js";
 import {
   verifyAccessToken,
   authorizeRoles,
 } from "../middlewares/auth-middleware.js";
-import { loginRateLimitConfig } from "../middlewares/rateLimit-configuration.js";
 import {
-  loginSchema,
-  refreshTokenSchema,
-  registerClientSchema,
-} from "../schemas/auth-schema.js";
+  updateAccountSchema,
+  changeRoleSchema,
+} from "../schemas/user-schema.js";
 
 const router = Router();
 
-router.post(
-  "/login",
-  loginRateLimitConfig,
-  validateBody(loginSchema),
-  loginController,
-);
-
-router.post(
-  "/refresh-token",
-  validateBody(refreshTokenSchema),
-  refreshTokenController,
-);
-
-// Solo ADMIN o SUPER_ADMIN: crear clientes
-router.post(
-  "/register",
+/**
+ * * LISTADO DE USUARIOS
+ * ! Permisos: Solo ADMIN o SUPER_ADMIN.
+ *
+ * * Razón de seguridad:
+ * * La respuesta viene sanitizada: solo role, name, userName, dpi, address,
+ * ! phone, email y status. Nunca se expone el _id de Mongo ni datos
+ * ! sensibles (password, tokens). Aun así, esta lista es información
+ * ! interna y no debe quedar expuesta sin autenticación previa.
+ */
+router.get(
+  "/users",
   verifyAccessToken,
   authorizeRoles("ADMIN", "SUPER_ADMIN"),
-  validateBody(registerClientSchema),
-  registerClientController,
+  listUsersController,
+);
+
+router.patch(
+  "/users/:userName",
+  verifyAccessToken,
+  validateBody(updateAccountSchema),
+  updateAccountController,
+);
+
+router.patch(
+  "/users/:userName/role",
+  verifyAccessToken,
+  authorizeRoles("SUPER_ADMIN"),
+  validateBody(changeRoleSchema),
+  changeRoleController,
 );
 
 export default router;
