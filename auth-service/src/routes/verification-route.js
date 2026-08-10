@@ -11,9 +11,6 @@ import {
 
 const router = Router();
 
-/* POST en vez de GET: el uid y el token viajan en el body, no en la URL,
-   para que no queden expuestos en el historial del navegador, logs de acceso,
-   cachés intermedias ni en el header Referer. */
 router.post(
   "/verify-email",
   validateBody(verifyEmailSchema),

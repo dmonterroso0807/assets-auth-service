@@ -161,6 +161,26 @@ export const refreshAccessToken = async (refreshToken) => {
     );
   }
 
+  const newRefreshToken = generateRefreshToken(user);
+  user.refreshTokens = user.refreshTokens.filter((t) => t !== refreshToken);
+  user.refreshTokens.push(newRefreshToken);
+  await user.save({ validateBeforeSave: false });
+
   const accessToken = generateAccessToken(user);
-  return { accessToken };
+  return { accessToken, refreshToken: newRefreshToken };
+};
+
+export const logout = async (refreshToken) => {
+  let payload;
+  try {
+    payload = verifyToken(refreshToken);
+  } catch {
+    return;
+  }
+
+  const user = await User.findById(payload.uid).select("+refreshTokens");
+  if (!user) return;
+
+  user.refreshTokens = user.refreshTokens.filter((t) => t !== refreshToken);
+  await user.save({ validateBeforeSave: false });
 };

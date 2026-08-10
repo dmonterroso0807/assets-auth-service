@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   loginController,
   refreshTokenController,
+  logoutController,
   registerClientController,
 } from "../controllers/auth-controller.js";
 import { validateBody } from "../middlewares/validate-middleware.js";
@@ -13,6 +14,7 @@ import { loginRateLimitConfig } from "../middlewares/rateLimit-configuration.js"
 import {
   loginSchema,
   refreshTokenSchema,
+  logoutSchema,
   registerClientSchema,
 } from "../schemas/auth-schema.js";
 
@@ -30,6 +32,8 @@ router.post(
   validateBody(refreshTokenSchema),
   refreshTokenController,
 );
+
+router.post("/logout", validateBody(logoutSchema), logoutController);
 
 // Solo ADMIN o SUPER_ADMIN: crear clientes
 router.post(

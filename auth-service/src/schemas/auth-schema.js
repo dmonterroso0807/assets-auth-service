@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { strongPassword } from "./shared-rules.js";
 
 export const loginSchema = z.object({
   userName: z.string().trim().min(1, "El nombre de usuario es requerido"),
@@ -18,14 +19,7 @@ export const registerClientSchema = z.object({
     .trim()
     .regex(/^\d{8}$/, "El celular debe tener 8 dígitos"),
   email: z.string().trim().email("El correo electrónico no es válido"),
-  password: z
-    .string()
-    .min(8, "La contraseña es obligatoria")
-    .max(50)
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      "La contraseña debe tener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial",
-    ),
+  password: strongPassword,
   jobName: z
     .string()
     .trim()
@@ -40,32 +34,4 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().trim().min(1, "El refresh token es requerido"),
 });
 
-export const resendVerificationSchema = z.object({
-  email: z.string().trim().email("El correo electrónico no es válido"),
-});
-
-export const verifyEmailSchema = z.object({
-  uid: z.string().trim().min(1, "El identificador de usuario es requerido"),
-  token: z.string().trim().min(1, "El token de verificación es requerido"),
-});
-
-export const updateAccountSchema = z
-  .object({
-    name: z.string().trim().min(1).max(50).optional(),
-    address: z.string().trim().min(1).max(150).optional(),
-    jobName: z.string().trim().min(1).max(100).optional(),
-    monthlyIncome: z
-      .number({ invalid_type_error: "El ingreso mensual debe ser un número" })
-      .min(100, "El ingreso mensual debe ser mayor o igual a 100")
-      .optional(),
-  })
-  .strict()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "Debes enviar al menos un campo para actualizar",
-  });
-
-export const changeRoleSchema = z.object({
-  role: z.enum(["SUPER_ADMIN", "ADMIN", "CLIENT"], {
-    message: "El rol debe ser ADMIN o CLIENT",
-  }),
-});
+export const logoutSchema = refreshTokenSchema;

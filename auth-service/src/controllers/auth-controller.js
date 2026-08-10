@@ -20,6 +20,15 @@ export const refreshTokenController = async (req, res) => {
   }
 };
 
+export const logoutController = async (req, res) => {
+  try {
+    await authService.logout(req.body.refreshToken);
+    return ok(res, { message: "Sesión cerrada exitosamente" });
+  } catch (error) {
+    return handleServiceError(res, error, "Auth");
+  }
+};
+
 export const registerClientController = async (req, res) => {
   try {
     const client = await authService.registerClient(req.body);
