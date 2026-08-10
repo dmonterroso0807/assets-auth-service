@@ -39,4 +39,5 @@ router.post(
   validateBody(registerClientSchema),
   registerClientController,
 );
+
 export default router;

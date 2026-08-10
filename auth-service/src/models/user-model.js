@@ -74,7 +74,7 @@ const userSchema = new Schema(
       type: String,
       required: [true, "La contraseña es obligatoria"],
       minlength: [6, "La contraseña debe tener un mínimo de 6 caracteres"],
-      maxlength: [72, "La contraseña no debe superar 72 caracteres"], // límite real de bcrypt
+      maxlength: [72, "La contraseña no debe superar 72 caracteres"],
       select: false,
     },
     jobName: {

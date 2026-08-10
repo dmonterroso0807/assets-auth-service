@@ -9,12 +9,12 @@ import { rateLimitConfig } from "../middlewares/rateLimit-configuration.js";
 import { corsOptions } from "./cors-configuration.js";
 import { helmetConfiguration } from "./helmet-configuration.js";
 import { seedAdmin } from "../utils/seedAdmin.js";
-import authRoutes from "../routes/auth-route.js";
+import routes from "../routes/index.js";
 
 const middlewares = (app) => {
   // Configuración de express para manejar solicitudes con cuerpos grandes
   app.use(express.urlencoded({ extended: false, limit: "10mb" }));
-  app.use(express.json({ limit: "10mb" }));
+  app.use(express.json({ limit: "100kb" }));
   // Configuraciones de Cors
   app.use(cors(corsOptions));
   // Configuraciones de Helmet
@@ -25,11 +25,11 @@ const middlewares = (app) => {
   app.use(morgan(process.env.NODE_ENV === "development" ? "dev" : "combined"));
 };
 
-const routes = (app) => {
+const mountRoutes = (app) => {
   app.get("/health-check", (req, res) => {
     res.status(200).json({ success: true, message: "auth-service OK" });
   });
-  app.use("/api/auth", authRoutes);
+  app.use("/api/auth", routes);
 };
 
 export const initServer = async () => {
@@ -41,13 +41,13 @@ export const initServer = async () => {
     await dbConnection();
     await seedAdmin();
     middlewares(app);
-    (routes(app),
-      app.listen(PORT, () => {
-        console.log(
-          `Servidor escuchando en el puerto ${PORT} - Modo: ${process.env.NODE_ENV}`,
-        );
-        console.log(`Health check: http://localhost:${PORT}/health-check`);
-      }));
+    mountRoutes(app);
+    app.listen(PORT, () => {
+      console.log(
+        `Servidor escuchando en el puerto ${PORT} - Modo: ${process.env.NODE_ENV}`,
+      );
+      console.log(`Health check: http://localhost:${PORT}/health-check`);
+    });
   } catch (error) {
     console.error("Error al iniciar el servidor:", error);
     process.exit(1);
