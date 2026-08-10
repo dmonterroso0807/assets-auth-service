@@ -6,7 +6,7 @@ const userSchema = new Schema(
       type: String,
       enum: {
         values: ["SUPER_ADMIN", "ADMIN", "CLIENT"],
-        message: "El rol debe ser ADMIN o CLIENT",
+        message: "El rol debe ser SUPER_ADMIN, ADMIN o CLIENT",
       },
       default: "CLIENT",
       required: true,
@@ -116,13 +116,22 @@ const userSchema = new Schema(
       default: [],
       select: false,
     },
-    // Verificación de correo electrónico por token (hash + expiración)
     emailVerificationTokenHash: {
       type: String,
       select: false,
       default: null,
     },
     emailVerificationExpires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
+    passwordResetTokenHash: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    passwordResetExpires: {
       type: Date,
       select: false,
       default: null,

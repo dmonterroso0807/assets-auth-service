@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 
+const ALGORITHM = "HS256";
+
 export const generateAccessToken = (user) => {
   return jwt.sign(
     {
@@ -9,6 +11,7 @@ export const generateAccessToken = (user) => {
     },
     process.env.JWT_SECRET,
     {
+      algorithm: ALGORITHM,
       expiresIn: process.env.JWT_EXPIRES_IN,
       issuer: process.env.JWT_ISSUER,
       audience: process.env.JWT_AUDIENCE,
@@ -24,6 +27,7 @@ export const generateRefreshToken = (user) => {
     },
     process.env.JWT_SECRET,
     {
+      algorithm: ALGORITHM,
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
       issuer: process.env.JWT_ISSUER,
       audience: process.env.JWT_AUDIENCE,
@@ -33,6 +37,7 @@ export const generateRefreshToken = (user) => {
 
 export const verifyToken = (token) => {
   return jwt.verify(token, process.env.JWT_SECRET, {
+    algorithms: [ALGORITHM],
     issuer: process.env.JWT_ISSUER,
     audience: process.env.JWT_AUDIENCE,
   });

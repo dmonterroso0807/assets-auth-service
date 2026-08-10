@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { escapeHtml } from "./sanitize-util.js";
 
 let transporter;
 
@@ -12,6 +13,9 @@ const getTransporter = () => {
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_APP_PASSWORD,
+    },
+    tls: {
+      minVersion: "TLSv1.2",
     },
   });
 
@@ -40,59 +44,114 @@ export const verifyMailerConnection = async () => {
   }
 };
 
-export const sendVerificationEmail = async ({ to, name, verificationUrl }) => {
-  const mailer = getTransporter();
+const emailShell = (innerHtml) => `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f3ff; padding: 40px 10px; margin: 0;">
+    <div style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(109, 40, 217, 0.08); border: 1px solid #ede9fe;">
 
-  const html = `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f3ff; padding: 40px 10px; margin: 0;">
-      <div style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(109, 40, 217, 0.08); border: 1px solid #ede9fe;">
-      
-        <!-- Header con gradiente violeta -->
-        <div style="background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%); padding: 32px 24px; text-align: center;">
-          <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">SmartAssets</h1>
-        </div>
-
-        <!-- Cuerpo del mensaje -->
-        <div style="padding: 32px 28px; color: #334155;">
-          <h3 style="color: #1e1b4b; font-size: 20px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">¡Hola, ${name}! 👋</h3>
-        
-          <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
-            Gracias por registrarte en SmartAssets. Para activar tu cuenta y asegurar tus datos, confirma tu dirección de correo electrónico.
-          </p>
-
-          <!-- Botón principal CTA -->
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="${verificationUrl}"
-              style="display: inline-block; padding: 14px 28px; background-color: #7c3aed; color: #ffffff; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
-              Verificar mi correo
-            </a>
-          </div>
-
-         <!-- Bloque de enlace secundario -->
-          <div style="background-color: #f8f5ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 16px; margin-top: 24px;">
-            <p style="font-size: 13px; color: #6b21a8; margin: 0 0 8px 0; font-weight: 600;">¿El botón no funciona?</p>
-            <p style="font-size: 12px; color: #64748b; margin: 0 0 8px 0;">Copia y pega este enlace en tu navegador:</p>
-            <a href="${verificationUrl}" style="font-size: 12px; color: #7c3aed; word-break: break-all; text-decoration: underline;">${verificationUrl}</a>
-          </div>
-
-          <!-- Pie/Aviso -->
-          <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 32px; margin-bottom: 0;">
-            Este enlace expira pronto. Si no creaste una cuenta en SmartAssets, puedes ignorar este mensaje.
-          </p>
-        </div>
-
+      <div style="background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%); padding: 32px 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">SmartAssets</h1>
       </div>
-    </div>
-  `;
 
-  const info = await mailer.sendMail({
+      <div style="padding: 32px 28px; color: #334155;">
+        ${innerHtml}
+      </div>
+
+    </div>
+  </div>
+`;
+
+const ctaButton = (url, label) => `
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="${url}"
+      style="display: inline-block; padding: 14px 28px; background-color: #7c3aed; color: #ffffff; font-weight: 600; font-size: 15px; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+      ${label}
+    </a>
+  </div>
+`;
+
+const secondaryLinkBlock = (url) => `
+  <div style="background-color: #f8f5ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 16px; margin-top: 24px;">
+    <p style="font-size: 13px; color: #6b21a8; margin: 0 0 8px 0; font-weight: 600;">¿El botón no funciona?</p>
+    <p style="font-size: 12px; color: #64748b; margin: 0 0 8px 0;">Copia y pega este enlace en tu navegador:</p>
+    <a href="${url}" style="font-size: 12px; color: #7c3aed; word-break: break-all; text-decoration: underline;">${url}</a>
+  </div>
+`;
+
+const footerNote = (text) => `
+  <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 32px; margin-bottom: 0;">
+    ${text}
+  </p>
+`;
+
+const sendMail = async ({ to, subject, html, logLabel }) => {
+  const info = await getTransporter().sendMail({
     from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    to,
+    subject,
+    html,
+  });
+  console.log(
+    `Mailer | ${logLabel} enviado a ${to} vía TLS (id: ${info.messageId})`,
+  );
+};
+
+export const sendVerificationEmail = async ({ to, name, verificationUrl }) => {
+  const safeName = escapeHtml(name);
+
+  const html = emailShell(`
+    <h3 style="color: #1e1b4b; font-size: 20px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">¡Hola, ${safeName}! 👋</h3>
+    <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
+      Gracias por registrarte en SmartAssets. Para activar tu cuenta y asegurar tus datos, confirma tu dirección de correo electrónico.
+    </p>
+    ${ctaButton(verificationUrl, "Verificar mi correo")}
+    ${secondaryLinkBlock(verificationUrl)}
+    ${footerNote("Este enlace expira pronto. Si no creaste una cuenta en SmartAssets, puedes ignorar este mensaje.")}
+  `);
+
+  await sendMail({
     to,
     subject: "Verifica tu correo - SmartAssets",
     html,
+    logLabel: "Correo de verificación",
   });
+};
 
-  console.log(
-    `Mailer | Correo de verificación enviado a ${to} vía TLS (id: ${info.messageId})`,
-  );
+export const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
+  const safeName = escapeHtml(name);
+
+  const html = emailShell(`
+    <h3 style="color: #1e1b4b; font-size: 20px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">Hola, ${safeName} 🔐</h3>
+    <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
+      Recibimos una solicitud para restablecer la contraseña de tu cuenta SmartAssets. Si fuiste tú, elige una nueva contraseña con el siguiente botón.
+    </p>
+    ${ctaButton(resetUrl, "Restablecer contraseña")}
+    ${secondaryLinkBlock(resetUrl)}
+    ${footerNote("Este enlace expira pronto. Si tú no solicitaste esto, ignora este correo: tu contraseña actual sigue funcionando y nadie podrá cambiarla sin acceso a este correo.")}
+  `);
+
+  await sendMail({
+    to,
+    subject: "Restablece tu contraseña - SmartAssets",
+    html,
+    logLabel: "Correo de reset de contraseña",
+  });
+};
+
+export const sendPasswordChangedEmail = async ({ to, name }) => {
+  const safeName = escapeHtml(name);
+
+  const html = emailShell(`
+    <h3 style="color: #1e1b4b; font-size: 20px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">Hola, ${safeName} ✅</h3>
+    <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 8px;">
+      Tu contraseña de SmartAssets se cambió correctamente. Por seguridad, cerramos todas las sesiones activas de tu cuenta.
+    </p>
+    ${footerNote("Si no fuiste tú quien hizo este cambio, contacta al administrador de inmediato.")}
+  `);
+
+  await sendMail({
+    to,
+    subject: "Tu contraseña fue actualizada - SmartAssets",
+    html,
+    logLabel: "Aviso de cambio de contraseña",
+  });
 };
